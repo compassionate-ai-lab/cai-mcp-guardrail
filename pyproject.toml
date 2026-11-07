@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cai-mcp-guardrail"
+version = "0.2.0"
+description = "A local MCP No-Harm policy and approval reference implementation"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["mcp==1.29.0", "jsonschema>=4.20,<5"]
+license = {text = "MIT"}
+
+[project.scripts]
+cai-guardrail = "cai_guardrail.cli:main"
+
+[tool.setuptools]
+packages = ["cai_guardrail"]

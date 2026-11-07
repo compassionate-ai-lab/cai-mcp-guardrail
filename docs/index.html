@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Try a browser simulation of Compassionate AI Lab’s local MCP No-Harm guardrail and single-use approval workflow.">
+<title>Compassionate AI MCP Guardrail Demo</title>
+<style>
+:root{font-family:system-ui,sans-serif;color-scheme:dark;background:#091425;color:#ebf4ff}
+*{box-sizing:border-box}
+body{margin:0}main{max-width:56rem;margin:auto;padding:clamp(1rem,5vw,3.5rem)}
+header{padding:clamp(1.2rem,5vw,2.6rem);background:linear-gradient(115deg,#132e54,#302154);border:1px solid #5872a2;border-radius:1rem}
+.kicker{color:#93eafa;font-size:.8rem;letter-spacing:.15em;font-weight:700;text-transform:uppercase}
+h1{font-size:clamp(2rem,6vw,3.5rem);letter-spacing:-.045em;margin:.3rem 0 1rem;line-height:1.05}
+p,li{line-height:1.55}a{color:#a6e7ff}h2{margin-top:0}
+.panel{margin-top:1.1rem;padding:clamp(1rem,4vw,1.65rem);background:#10213a;border:1px solid #344c72;border-radius:1rem}
+.controls{display:flex;flex-wrap:wrap;gap:.65rem;align-items:center}
+button,select{font:inherit;padding:.64rem .8rem;border:1px solid #85b5ee;border-radius:.5rem;background:#203961;color:#fff}
+button{cursor:pointer}button:disabled{cursor:default;opacity:.55}
+button:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #84ecff;outline-offset:3px}
+output{display:block;margin-top:1rem;background:#0a162b;padding:.85rem;border-radius:.5rem;min-height:3rem;line-height:1.55}
+ol{padding-left:1.35rem}code{overflow-wrap:anywhere;color:#a9eaff}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="kicker">Compassionate AI Lab · v0.2</p>
+    <h1>Compassionate AI MCP Guardrail</h1>
+    <p>See how a No-Harm policy handles a read, a proposed notification, and a permanent deletion.</p>
+    <p>This browser simulation uses synthetic in-memory state. It makes no MCP or network calls.</p>
+  </header>
+  <section class="panel" aria-labelledby="try">
+    <h2 id="try">Try a tool call</h2>
+    <div class="controls">
+      <label for="channel">Notification channel</label>
+      <select id="channel"><option value="demo-response-team">Demo response team</option><option value="demo-supervisor">Demo supervisor</option></select>
+    </div>
+    <p>Every call uses synthetic incident <code>INC-001</code>.</p>
+    <div class="controls">
+      <button id="read">Read incident</button>
+      <button id="notify">Request or retry notification</button>
+      <button id="remove">Attempt permanent deletion</button>
+    </div>
+    <output id="status" aria-live="polite">Choose a tool to begin.</output>
+  </section>
+  <section class="panel" aria-labelledby="review">
+    <h2 id="review">Operator review</h2>
+    <p id="proposal">No pending notification.</p>
+    <div class="controls">
+      <button id="approve" disabled>Approve once</button>
+      <button id="reject" disabled>Reject</button>
+      <button id="reset">Reset simulation</button>
+    </div>
+    <p>After approval, retry the same channel. Switch channels to see why changed arguments need separate approval.</p>
+  </section>
+  <section class="panel" aria-labelledby="effects">
+    <h2 id="effects">Simulated backend effects</h2>
+    <p id="empty">No tool calls have reached the simulated backend.</p>
+    <ol id="events"></ol>
+  </section>
+  <p>The installed guardrail also provides read-only status and request tracing. These tools inspect its local audit database.</p>
+  <p><a href="https://github.com/compassionate-ai-lab/">Compassionate AI Lab on GitHub</a></p>
+</main>
+<script>
+"use strict";
+const byId = (id) => document.getElementById(id);
+const reviews = new Map();
+const channel = () => byId("channel").value;
+const say = (message) => { byId("status").textContent = message; };
+
+function renderReview() {
+  const status = reviews.get(channel());
+  byId("proposal").textContent = status
+    ? "Send notification for INC-001 to " + channel() + " · " + status
+    : "No pending notification for this channel.";
+  byId("approve").disabled = status !== "pending";
+  byId("reject").disabled = status !== "pending";
+}
+
+function effect(message) {
+  const item = document.createElement("li");
+  item.textContent = message;
+  byId("events").append(item);
+  byId("empty").hidden = true;
+}
+
+byId("channel").addEventListener("change", renderReview);
+byId("read").addEventListener("click", () => {
+  effect("Read INC-001.");
+  say("Allowed. The synthetic incident was read.");
+});
+byId("remove").addEventListener("click", () => {
+  say("Denied. The deletion did not reach the simulated backend.");
+});
+byId("notify").addEventListener("click", () => {
+  const target = channel();
+  const status = reviews.get(target);
+  if (status === "approved") {
+    reviews.delete(target);
+    effect("Queued one synthetic notification to " + target + ".");
+    say("Executed once. This approval has been consumed.");
+  } else if (status === "rejected") {
+    say("Denied. The operator rejected this notification.");
+  } else {
+    reviews.set(target, "pending");
+    say("Approval required. The notification has not been sent.");
+  }
+  renderReview();
+});
+byId("approve").addEventListener("click", () => {
+  if (reviews.get(channel()) !== "pending") return;
+  reviews.set(channel(), "approved");
+  say("Approved once. Retry the same notification to use the approval.");
+  renderReview();
+});
+byId("reject").addEventListener("click", () => {
+  if (reviews.get(channel()) !== "pending") return;
+  reviews.set(channel(), "rejected");
+  say("Rejected. This notification remains blocked in the simulation.");
+  renderReview();
+});
+byId("reset").addEventListener("click", () => {
+  reviews.clear();
+  byId("events").replaceChildren();
+  byId("empty").hidden = false;
+  byId("channel").selectedIndex = 0;
+  renderReview();
+  say("Simulation reset.");
+});
+</script>
+</body>
+</html>

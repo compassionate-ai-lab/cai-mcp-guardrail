@@ -1,0 +1,15 @@
+{
+  "platform": "Linux x86_64",
+  "python": "3.12.14",
+  "samples_per_path": 120,
+  "warmup_per_path": 10,
+  "direct_mock": {
+    "p50_ms": 0.427,
+    "p95_ms": 0.562
+  },
+  "through_guardrail": {
+    "p50_ms": 1.378,
+    "p95_ms": 1.724
+  },
+  "p95_difference_ms": 1.162
+}

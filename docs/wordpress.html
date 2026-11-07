@@ -1,0 +1,13 @@
+<article aria-label="Compassionate AI MCP Guardrail">
+  <p><strong>What should happen when an AI agent is about to send a notification or permanently delete a record?</strong></p>
+  <p>Compassionate AI Lab’s MCP Guardrail turns two of Dr. Sri Amit Ray’s Compassionate AI mottos into rules that can be tested. The No-Harm Principle sets limits on what the agent may do. Human dignity and choice mean a person can inspect and decide on an action before it runs.</p>
+  <h2>Try three decisions</h2>
+  <ol>
+    <li><strong>Allow a read.</strong> The agent can retrieve a synthetic incident record when its request matches the tool’s schema.</li>
+    <li><strong>Review a notification.</strong> A local operator reviews the exact proposed action. An approval permits one matching retry in the same session.</li>
+    <li><strong>Block permanent deletion.</strong> The proposed action is denied before it reaches the mock backend.</li>
+  </ol>
+  <h2>Verify what happened</h2>
+  <p>The local project includes a reproducible demo and test cases that check the mock backend’s actual effects. Its local status command verifies the audit chain. Request tracing links a tool call to its approval and recorded outcome without displaying raw tool arguments. The browser simulation illustrates the same flow using synthetic state in the page.</p>
+  <p>Visit <a href="https://github.com/compassionate-ai-lab/">Compassionate AI Lab on GitHub</a> for the lab’s projects.</p>
+</article>
