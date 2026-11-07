@@ -1,0 +1,86 @@
+version: "3.8"
+
+networks:
+  cai_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  phoenix_data:
+    driver: local
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cai_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: postgres
+      GATEWAY_DB_NAME: ${GATEWAY_DB_NAME}
+      PHOENIX_DB_NAME: ${PHOENIX_DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    ports:
+      - "5432:5432"
+    networks:
+      - cai_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    container_name: cai_phoenix_tracer
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - PHOENIX_SQL_DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${PHOENIX_DB_NAME}
+      - PHOENIX_SECRET=${PHOENIX_SECRET}
+      - PHOENIX_ADMIN_PASSWORD=${PHOENIX_ADMIN_PASSWORD}
+      - PHOENIX_WORKING_DIR=/mnt/phoenix_data
+    volumes:
+      - phoenix_data:/mnt/phoenix_data
+    ports:
+      - "${PHOENIX_PORT}:6006"
+      - "${PHOENIX_GRPC_PORT}:4317"
+    networks:
+      - cai_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:6006/ -o /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: cai_contextforge_gateway
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      phoenix:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${GATEWAY_DB_NAME}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://phoenix:6006/v1/traces
+      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME}
+      - FLOOR_VETO_THRESHOLD=${FLOOR_VETO_THRESHOLD}
+    ports:
+      - "${GATEWAY_PORT}:8000"
+    networks:
+      - cai_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
