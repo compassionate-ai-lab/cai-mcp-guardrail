@@ -1,6 +1,6 @@
 # Compassionate AI MCP Guardrail
 
-A local reference implementation from **Compassionate AI Lab**, founded by **Dr. Sri Amit Ray**. It applies Ahimsa and human oversight to a specific question: should an AI agent be allowed to execute this tool call?
+A local reference implementation from **Compassionate AI Lab**, founded by **Dr. Sri Amit Ray**. It applies AI for expanding Human dignity, Ahimsa and human oversight to a specific question: should an AI agent be allowed to execute this tool call? [ Explores the Future of AI, Human Development and Human Dignity](https://www.researchgate.net/publication/414866678_Sri_Amit_Ray_Compassionate_AI_UN_2030_and_the_17_SDGs_Principles_Architectures)
 
 **v0.2.0** runs a synthetic incident scenario through a real MCP stdio client, guardrail server, and separate mock backend. All runtime effects stay local.
 
